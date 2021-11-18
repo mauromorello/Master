@@ -577,6 +577,7 @@ def network():
 	iplocalwifi=networkmod.IPADDRESS
 	ipport=networkmod.PUBLICPORT
 	hostname=networkmod.gethostname()
+	API_KEY=networkdbmod.getAPI_KEY()
 	connectedssidlist=networkmod.connectedssid()
 	if len(connectedssidlist)>0:
 		connectedssid=connectedssidlist[0]
@@ -588,7 +589,7 @@ def network():
 	#print " localwifisystem = ", localwifisystem , " connectedssid ", connectedssid
 	message=networkmod.networkdbmod.getstoredmessage()
 
-	return render_template('network.html',filenamelist=filenamelist, connectedssid=connectedssid,localwifisystem=localwifisystem, ipext=ipext, iplocallist=iplocallist , iplocal=iplocal, iplocalwifi=iplocalwifi , ipport=ipport , hostname=hostname, message=message)
+	return render_template('network.html',filenamelist=filenamelist, connectedssid=connectedssid,localwifisystem=localwifisystem, ipext=ipext, iplocallist=iplocallist , iplocal=iplocal, iplocalwifi=iplocalwifi , ipport=ipport , hostname=hostname, message=message, API_KEY=API_KEY)
 
 
 
@@ -677,6 +678,44 @@ def imageshow():
 	return render_template('showimages.html',filenamelist=filenamelist,titlelist=titlelist,wlist=wlist,hlist=hlist,monthlist=monthlist,selectedmothname=selectedmothname, thumbfilenamelist=thumbfilenamelist)
 
 
+@application.route('/api/', methods=['GET'])
+def api():
+	
+	a_key=request.args['key']
+	name=request.args['name']
+	
+	API_KEY=networkdbmod.getAPI_KEY()
+
+	
+	if API_KEY==a_key:
+		print("Access API: key->",a_key)
+		answer={}
+		answer={"OK key":a_key}
+		sensorlist=sensordbmod.gettablelist()
+		endtime=datetime.now()
+		starttime= endtime - timedelta(days=1)	
+		if name in sensorlist:
+			sensordata=[]		
+			sensordbmod.getsensordbdatadaysV2(name,sensordata,starttime,endtime)
+			isok, evaluateddata=sensordbmod.EvaluateDataPeriod(sensordata,starttime,endtime)
+			paneldatarow={}		
+			paneldatarow["name"]=name
+			paneldatarow["average"]=str('%.1f' % evaluateddata["average"])
+			paneldatarow["min"]=str('%.1f' % evaluateddata["min"])
+			paneldatarow["max"]=str('%.1f' % evaluateddata["max"])
+			paneldatarow["unit"]=hardwaremod.searchdata(hardwaremod.HW_INFO_NAME,name,hardwaremod.HW_INFO_MEASUREUNIT)	
+			paneldatarow["enabled"]="none"
+
+			ret_data=paneldatarow
+	else:		
+		print("NO Access API: key->",a_key)
+		answer={}
+		answer={"NO ACCESS key":a_key}
+		ret_data=answer
+	
+	
+	#print ret_data
+	return jsonify(ret_data)
 	
 @application.route('/echo/', methods=['GET'])
 def echo():
@@ -1436,6 +1475,7 @@ def networksetting():
 			AP_TIME=request.form['AP_TIME']
 			WIFIENDIS=request.form['WIFIENDIS']
 			HOSTNAME=request.form['HOSTNAME']
+			API_KEY=request.form['API_KEY']
 			forceStaticIP=request.form['forceStaticIP']
 			
 			
@@ -1460,7 +1500,6 @@ def networksetting():
 				AP_TIMEold=str(networkmod.WAITTOCONNECT)
 				HOSTNAMEold=networkmod.gethostname()
 				WIFIENDISold=networkmod.WIFIENDIS
-				
 							
 				
 				print("save in network file in database")
@@ -1468,6 +1507,7 @@ def networksetting():
 				networkdbmod.changesavesetting('LocalAPSSID',AP_SSID)
 				networkdbmod.changesavesetting('APtime',AP_TIME)			
 				networkdbmod.changesavesetting('WIFIENDIS',WIFIENDIS)
+				networkdbmod.changesavesetting('API_KEY',API_KEY)
 				networkdbmod.changesavesetting('forceStaticIP',forceStaticIP)
 				networkmod.FORCESTATICIP=forceStaticIP		
 						
@@ -1490,7 +1530,7 @@ def networksetting():
 				if HOSTNAME!=HOSTNAMEold:
 					networkmod.setnewhostname(HOSTNAME)
 									
-				
+									
 				# proceed with changes
 				networkmod.applyparameterschange(AP_SSID, AP_PASSWORD, IPADDRESS)
 				networkmod.WAITTOCONNECT=AP_TIME
@@ -1528,6 +1568,10 @@ def networksetting():
 	AP_SSID=networkmod.localwifisystem	
 	AP_TIME=str(networkmod.WAITTOCONNECT)
 	WIFIENDIS=networkmod.WIFIENDIS
+	
+	API_KEY=networkdbmod.getAPI_KEY()
+	
+	
 	forceStaticIP=networkmod.FORCESTATICIP
 	connectedssidlist=networkmod.connectedssid()
 	if len(connectedssidlist)>0:
@@ -1538,7 +1582,7 @@ def networksetting():
 
 
 
-	return render_template('networksetting.html', IPADDRESS=IPADDRESS, AP_SSID=AP_SSID, AP_PASSWORD=AP_PASSWORD, AP_TIME=AP_TIME , HOSTNAME=HOSTNAME, WIFIENDIS=WIFIENDIS, forceStaticIP=forceStaticIP)	
+	return render_template('networksetting.html', IPADDRESS=IPADDRESS, AP_SSID=AP_SSID, AP_PASSWORD=AP_PASSWORD, AP_TIME=AP_TIME , API_KEY=API_KEY , HOSTNAME=HOSTNAME, WIFIENDIS=WIFIENDIS, forceStaticIP=forceStaticIP)	
 	
 
 
