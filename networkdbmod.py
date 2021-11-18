@@ -73,6 +73,12 @@ def readdata(filedata):
 	filestoragemod.readfiledata(DATAFILENAME,filedata)
 
 
+def getAPI_KEY():
+	recordkey="name"
+	recordvalue="IPsetting"
+	keytosearch="API_KEY"
+	dataitem=filestoragemod.searchdata(DATAFILENAME,recordkey,recordvalue,keytosearch)
+	return dataitem
 
 def getIPaddress():
 	recordkey="name"
@@ -140,7 +146,7 @@ def changesavesetting(FTparameter,FTvalue):
 	
 def restoredefault():
 	filestoragemod.deletefile(DATAFILENAME)
-	filedata=[{"name": "IPsetting", "LocalIPaddress": "192.168.1.172", "LocalPORT": "5172", "LocalAPSSID" : "Hydrosys4", "APtime" : "180"}]
+	filedata=[{"name": "IPsetting", "LocalIPaddress": "192.168.1.172", "LocalPORT": "5172", "LocalAPSSID" : "Hydrosys4", "APtime" : "180", "API_KEY":"Restored Default"}]
 	filestoragemod.savefiledata(DATAFILENAME,filedata)
 
 
